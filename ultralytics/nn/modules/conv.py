@@ -700,16 +700,15 @@ class CoordinateAttention(nn.Module):
 class ResBlockCA_Light(nn.Module):
     """Lightweight ResBlock with Coordinate Attention."""
     
-    def __init__(self, c1, stride=1, shortcut=False, g=1, reduction=32, *args):
+    def __init__(self, c1, reduction=32, *args):
         super(ResBlockCA_Light, self).__init__()
         self.c1 = c1
-        self.shortcut = shortcut and stride == 1
         
         # Simple residual block with CA
-        self.conv1 = Conv(c1, c1, 3, stride, act=True)
+        self.conv1 = Conv(c1, c1, 3, 1, act=True)
         self.ca = CoordinateAttention(c1, c1, reduction=reduction)
         
     def forward(self, x):
         out = self.conv1(x)
         out = self.ca(out)
-        return x + out if self.shortcut else out
+        return x + out  # Always use residual connection
