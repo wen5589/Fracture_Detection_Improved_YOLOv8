@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, '.')  # Use local ultralytics
+
 from ultralytics import YOLO
 
 def info(model_path, name):
