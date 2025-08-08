@@ -1,0 +1,63 @@
+# YOLOv8m P2–P5 with budget-neutral head and light CA
+# Goal: improve APs with minimal/no parameter increase vs baseline
+# NOTE: set `nc` to match your dataset (default 9 here)
+nc: 9
+scales:
+  n: [0.33, 0.25, 1024]
+  s: [0.33, 0.50, 1024]
+  m: [0.67, 0.75, 768]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.25, 512]
+
+# Backbone unchanged to maximize pretrained reuse
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]       # 0-P1/2
+  - [-1, 1, Conv, [128, 3, 2]]      # 1-P2/4
+  - [-1, 3, C2f, [128, True]]       # 2
+  - [-1, 1, Conv, [256, 3, 2]]      # 3-P3/8
+  - [-1, 6, C2f, [256, True]]       # 4
+  - [-1, 1, Conv, [512, 3, 2]]      # 5-P4/16
+  - [-1, 6, C2f, [512, True]]       # 6
+  - [-1, 1, Conv, [1024, 3, 2]]     # 7-P5/32
+  - [-1, 3, C2f, [1024, True]]      # 8
+  - [-1, 1, SPPF_CA, [1024, 1024, 5, 64]]  # 9: lightweight CA SPPF (reduction=64)
+
+head:
+  # P5->P4
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]      # 10
+  - [[-1, 6], 1, Concat, [1]]                       # 11 (P4 cat)
+  - [-1, 2, C2f, [448]]                              # 12 (P4 slim, repeats=2)
+  - [-1, 1, ResBlockCA_Light, [448, 1, False, 1, 64]]# 13 (CA, reduction=64)
+
+  # P4->P3
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]      # 14
+  - [[-1, 4], 1, Concat, [1]]                       # 15 (P3 cat)
+  - [-1, 2, C2f, [224]]                              # 16 (P3 slim, repeats=2)
+  - [-1, 1, ResBlockCA_Light, [224, 1, False, 1, 32]]# 17 (CA, reduction=32)
+
+  # P3->P2
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]      # 18
+  - [[-1, 2], 1, Concat, [1]]                       # 19 (P2 cat)
+  - [-1, 2, C2f, [112]]                              # 20 (P2 narrow, repeats=2)
+  - [-1, 1, ResBlockCA_Light, [112, 1, False, 1, 32]]# 21
+
+  # Bottom-up: P2->P3
+  - [-1, 1, Conv, [224, 3, 2]]                      # 22
+  - [[-1, 17], 1, Concat, [1]]                      # 23
+  - [-1, 2, C2f, [224]]                              # 24
+  - [-1, 1, ResBlockCA_Light, [224, 1, False, 1, 32]]# 25
+
+  # P3->P4
+  - [-1, 1, Conv, [448, 3, 2]]                      # 26
+  - [[-1, 12], 1, Concat, [1]]                      # 27
+  - [-1, 2, C2f, [448]]                              # 28
+  - [-1, 1, ResBlockCA_Light, [448, 1, False, 1, 64]]# 29
+
+  # P4->P5
+  - [-1, 1, Conv, [896, 3, 2]]                      # 30
+  - [[-1, 9], 1, Concat, [1]]                       # 31
+  - [-1, 2, C2f, [896]]                              # 32
+  - [-1, 1, ResBlockCA_Light, [896, 1, False, 1, 64]]# 33
+
+  # Detect: P2, P3, P4, P5
+  - [[21, 25, 29, 33], 1, Detect, [nc]]

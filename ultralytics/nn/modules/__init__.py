@@ -13,10 +13,10 @@ torch.onnx.export(m, x, f)
 os.system(f'onnxsim {f} {f} && open {f}')
 """
 
-from .block import (C1, C2, C3, C3TR, DFL, SPP, SPPF, Bottleneck, BottleneckCSP, C2f, C3Ghost, C3x, GhostBottleneck,
+from .block import (C1, C2, C3, C3TR, DFL, SPP, SPPF, SPPF_CA, Bottleneck, BottleneckCSP, C2f, C3Ghost, C3x, GhostBottleneck,
                     HGBlock, HGStem, Proto, RepC3)
 from .conv import (CBAM, ChannelAttention, Concat, Conv, Conv2, ConvTranspose, DWConv, DWConvTranspose2d, Focus,
-                   GhostConv, LightConv, RepConv, SpatialAttention,
+                   GhostConv, LightConv, RepConv, SpatialAttention, CoordinateAttention, ResBlockCA_Light,
                    GAM_Attention,GCT,ShuffleAttention,ResBlock_CBAM,ECAAttention,MHSA,GlobalContext,GatherExcite)
 from .head import Classify, Detect, Pose, RTDETRDecoder, Segment
 from .transformer import (AIFI, MLP, DeformableTransformerDecoder, DeformableTransformerDecoderLayer, LayerNorm2d,
@@ -24,8 +24,9 @@ from .transformer import (AIFI, MLP, DeformableTransformerDecoder, DeformableTra
 
 __all__ = ('Conv', 'Conv2', 'LightConv', 'RepConv', 'DWConv', 'DWConvTranspose2d', 'ConvTranspose', 'Focus',
            'GhostConv', 'ChannelAttention', 'SpatialAttention', 'CBAM', 'Concat', 'TransformerLayer',
-           'TransformerBlock', 'MLPBlock', 'LayerNorm2d', 'DFL', 'HGBlock', 'HGStem', 'SPP', 'SPPF', 'C1', 'C2', 'C3',
+           'TransformerBlock', 'MLPBlock', 'LayerNorm2d', 'DFL', 'HGBlock', 'HGStem', 'SPP', 'SPPF', 'SPPF_CA', 'C1', 'C2', 'C3',
            'C2f', 'C3x', 'C3TR', 'C3Ghost', 'GhostBottleneck', 'Bottleneck', 'BottleneckCSP', 'Proto', 'Detect',
            'Segment', 'Pose', 'Classify', 'TransformerEncoderLayer', 'RepC3', 'RTDETRDecoder', 'AIFI',
            'DeformableTransformerDecoder', 'DeformableTransformerDecoderLayer', 'MSDeformAttn', 'MLP',
-           'GAM_Attention','GCT','ShuffleAttention','ResBlock_CBAM','ECAAttention','MHSA','GatherExcite','GlobalContext')
+           'GAM_Attention','GCT','ShuffleAttention','ResBlock_CBAM','ECAAttention','MHSA','GatherExcite','GlobalContext',
+           'CoordinateAttention','ResBlockCA_Light')

@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from .conv import Conv, DWConv, GhostConv, LightConv, RepConv
 from .transformer import TransformerBlock
 
-__all__ = ('DFL', 'HGBlock', 'HGStem', 'SPP', 'SPPF', 'C1', 'C2', 'C3', 'C2f', 'C3x', 'C3TR', 'C3Ghost',
+__all__ = ('DFL', 'HGBlock', 'HGStem', 'SPP', 'SPPF', 'SPPF_CA', 'C1', 'C2', 'C3', 'C2f', 'C3x', 'C3TR', 'C3Ghost',
            'GhostBottleneck', 'Bottleneck', 'BottleneckCSP', 'Proto', 'RepC3')
 
 
@@ -302,3 +302,26 @@ class BottleneckCSP(nn.Module):
         y1 = self.cv3(self.m(self.cv1(x)))
         y2 = self.cv2(x)
         return self.cv4(self.act(self.bn(torch.cat((y1, y2), 1))))
+
+
+class SPPF_CA(nn.Module):
+    """Spatial Pyramid Pooling - Fast (SPPF) layer with lightweight Coordinate Attention."""
+
+    def __init__(self, c1, c2, k=5, reduction=32, *args):  # equivalent to SPP(k=(5, 9, 13))
+        super().__init__()
+        c_ = c1 // 2  # hidden channels
+        self.cv1 = Conv(c1, c_, 1, 1)
+        self.cv2 = Conv(c_ * 4, c2, 1, 1)
+        self.m = nn.MaxPool2d(kernel_size=k, stride=1, padding=k // 2)
+        
+        # Import CoordinateAttention from conv module
+        from .conv import CoordinateAttention
+        self.ca = CoordinateAttention(c2, c2, reduction=reduction)
+
+    def forward(self, x):
+        """Forward pass through SPPF with Coordinate Attention."""
+        x = self.cv1(x)
+        y1 = self.m(x)
+        y2 = self.m(y1)
+        out = self.cv2(torch.cat((x, y1, y2, self.m(y2)), 1))
+        return self.ca(out)
